@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29326.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccountCorporatEventCostSystem", "AccountCorporatEventCostSystem\AccountCorporatEventCostSystem.csproj", "{ACE0C555-7F88-48B2-8A8F-E949FC7EB7ED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ACE0C555-7F88-48B2-8A8F-E949FC7EB7ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACE0C555-7F88-48B2-8A8F-E949FC7EB7ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACE0C555-7F88-48B2-8A8F-E949FC7EB7ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACE0C555-7F88-48B2-8A8F-E949FC7EB7ED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EAB26812-0C9B-4902-9324-99E561D7DFCB}
+	EndGlobalSection
+EndGlobal
