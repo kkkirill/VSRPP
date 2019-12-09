@@ -19,12 +19,12 @@ namespace AccountCorporatEventCostSystem
             "EquipmentEntertainmentCosts", 
             "StartTime", 
             "EndTime"
-        };
-        private readonly string dateTimeFormat = "HH:mm dd.MM.yyyy";
-        private OdbcConnection dbConnection;
-        private int itemId;
-        private string filterCommand;
-        private List<Tuple<string, string>> errors;
+        }; // для удобства в программе записал сюда названия стобцов таблицы из Access
+        private readonly string dateTimeFormat = "HH:mm dd.MM.yyyy";    // формат даты 
+        private OdbcConnection dbConnection;    // объект подключения к базе данных
+        private int itemId;                     // id текущего элемента
+        private string filterCommand;           // сюда будет записывать дополнительная команда фильтрации (если надо фильтровать)
+        private List<Tuple<string, string>> errors; // список для хранения названия поля(где ошибка) и текст ошибки
 
         public Form1()
         {
@@ -36,39 +36,40 @@ namespace AccountCorporatEventCostSystem
             sortTypeComboBox.SelectedIndex = 0;
             sortFieldComboBox.SelectedIndex = 0;
             filterTypeComboBox.SelectedIndex = -1;
+                                                                // выше просто выставляю значения графических элементов по умолчанию
 
-            dbConnection = new OdbcConnection(Program.ConnectionString);
-            dbConnection.Open();
-            Update("ID");
+            dbConnection = new OdbcConnection(Program.ConnectionString);    // подключение к базе данных
+            dbConnection.Open();    // открываем подключение
+            Update("ID");   // обновляем список записей (в программе, т.е. список при старте программы пустой, но почти моментально заполняется данными из таблицы)
         }
 
-        private void Close(object sender, FormClosingEventArgs e)
+        private void Close(object sender, FormClosingEventArgs e)   // при закрытии программы
         {
-            dbConnection.Close();
+            dbConnection.Close();   // закрываем подключение к базе данных
         }
 
-        private void setFields(object[] values)
+        private void setFields(object[] values) // функция для заполнения полей (которые слева и где подробная информация)
         {
-            itemId = int.Parse(values[0].ToString());
-            nameField.Text = values[1].ToString();
-            visitorsAmountField.Text = values[2].ToString();
-            costPerVisitorField.Text = values[3].ToString();
-            rentPriceField.Text = values[4].ToString();
-            equipmentEntertainmentCostsField.Text = values[5].ToString();
+            itemId = int.Parse(values[0].ToString());   // преобразовываем объект в строку, а потом в число
+            nameField.Text = values[1].ToString();      // преобразовываем объект в строку
+            visitorsAmountField.Text = values[2].ToString();    // преобразовываем объект в строку
+            costPerVisitorField.Text = values[3].ToString();    // преобразовываем объект в строку
+            rentPriceField.Text = values[4].ToString(); // преобразовываем объект в строку
+            equipmentEntertainmentCostsField.Text = values[5].ToString();   // преобразовываем объект в строку
             try
             {
-                startDateTimePicker.CustomFormat = dateTimeFormat;
-                startDateTimePicker.Value = (DateTime)values[6];
-                endDateTimePicker.CustomFormat = dateTimeFormat;
+                startDateTimePicker.CustomFormat = dateTimeFormat;  // устанавливаем формат поля с датой
+                startDateTimePicker.Value = (DateTime)values[6];    // пытаемся записать туда значение (может не получится) и тогда попадём в catch
+                endDateTimePicker.CustomFormat = dateTimeFormat;    // аналогично
                 endDateTimePicker.Value = (DateTime)values[7];
             }
-            catch (Exception ex)
+            catch (Exception ex)    // сюда попадаем в случае если нажали на кнопку clear или если формат даты в таблице неправильный
             {
-                if (ex is FormatException || ex is InvalidCastException)
+                if (ex is FormatException || ex is InvalidCastException)    // если определённые ошибки, то ...
                 {
-                    startDateTimePicker.CustomFormat = " ";
+                    startDateTimePicker.CustomFormat = " "; // устанавливаем пустой формат
                     endDateTimePicker.CustomFormat = " ";
-                    startDateTimePicker.Text = values[6].ToString();
+                    startDateTimePicker.Text = values[6].ToString();    // записываем значение
                     endDateTimePicker.Text = values[7].ToString();
                     return;
                 }
@@ -76,7 +77,7 @@ namespace AccountCorporatEventCostSystem
             }
         }
 
-        private bool isAnyFieldEmpty()
+        private bool isAnyFieldEmpty()  // проверка на то есть ли хоть одно пустое поле
         {
             string[] values = {
                 nameField.Text,
@@ -90,37 +91,50 @@ namespace AccountCorporatEventCostSystem
             return values.Any(v => v == "" || v == " ");
         }
 
-        private void Update(string field, int ix = 0, bool isFiltered = false)
+        private void Update(string field, int ix = 0, bool isFiltered = false)  // обновление списка с записями field поле по которому сортируем
+                                                                                // ix индекс элемента, который хотим выбрать
+                                                                                // isFiltered флаг надо ли фильровать
         {
-            OdbcCommand command = dbConnection.CreateCommand();
-            if (!isFiltered)
+            OdbcCommand command = dbConnection.CreateCommand(); // создание ODBC комманды
+            if (!isFiltered)    
+                // записываем команду
+                // {string.Join(", ", dbFields)} - соеденияет все элементы коллекции dbFields в строку через ", "
+                // и результат будет вписан внутрь строки, т.е. получится "SELECT ID, Name, VisitorsAmount, ... FROM [events] ...
+                // {field} - просто подставит значение переменной в строку, т.е. получится что-то наподобие ... ORDER BY ID ... (если field равен строке "ID")
+                // {sortTypeComboBox.Text.ToUpper()} - берёт ыбранное значение из списка возвможных соритровок (это такая выпдающая менюшка, с значениями Asc и Desc) и приводит его к виду ASC или DESC
                 command.CommandText = $"SELECT {string.Join(", ", dbFields)} FROM [events] ORDER BY {field} {sortTypeComboBox.Text.ToUpper()}";
             else
+                // {filterCommand} - если выбрана опция фильтрации вставляет значение переменной в строку
+                // значение этой переменной задётся в другой функции ниже может быть таким например: 
+                // "WHERE VisitorsAmount>10 AND Name=John AND ..."
                 command.CommandText = $"SELECT {string.Join(", ", dbFields)} FROM [events] {filterCommand} ORDER BY {field} {sortTypeComboBox.Text.ToUpper()}";
-            OdbcDataReader reader = command.ExecuteReader();
-            eventsListBox.Items.Clear();
+            OdbcDataReader reader = command.ExecuteReader();    // выполняем команду
+            eventsListBox.Items.Clear();    // очищаем список элементов
 
-            object[] fieldValues = new object[8];
+            object[] fieldValues = new object[8];   // массив куда будем записывать значения полученные из Access
             int i = 0;
-            while (reader.Read())
+            while (reader.Read())   // считывает 1 строку табилцы
             {
-                reader.GetValues(fieldValues);
-                eventsListBox.Items.Add(string.Join(" ", fieldValues.Select(v =>
+                reader.GetValues(fieldValues);  // запоминаем значения в массив
+                eventsListBox.Items.Add(string.Join(" ",                
+                fieldValues.Select(v =>                                 // для каждого значения из fieldValues проверяем тип данных
+                                                                        // и если дата то конвертирем в строку с применением формата даты (записанного выше)
+                                                                        // иначе просто преобразовываем в строку
                 {
                     if (v.GetType() == typeof(DateTime))
                         return ((DateTime)v).ToString(dateTimeFormat);
                     return v.ToString();
-                }).ToArray()));
+                }).ToArray()));                                         // все значения преобразовываем в массив и массив соедениям в строку через пробел (строка 119: string.Join(" ", ...)
                 if (i++ == 0)
-                    setFields(fieldValues);
+                    setFields(fieldValues);     // вызывается только для первой записи в таблице (чтобы заполнить подробную информцию элемента)
             }
 
-            eventsListBox.SetSelected(ix, true);
+            eventsListBox.SetSelected(ix, true);    // выделяем элемент из списка записей
 
-            reader.Close();
+            reader.Close(); // закрываем объект для чтения данных из таблицы Access
         }
 
-        private void resetButton_Click(object sender, EventArgs e)
+        private void resetButton_Click(object sender, EventArgs e)  // вызывается когда нажимаем сброс и сбрасывае все фильтры и сортировки
         {
             sortTypeComboBox.SelectedIndex = 0;
             sortFieldComboBox.SelectedIndex = 0;
@@ -129,12 +143,12 @@ namespace AccountCorporatEventCostSystem
             Update(sortFieldComboBox.Text);
         }
 
-        private void sortButton_Click(object sender, EventArgs e)
+        private void sortButton_Click(object sender, EventArgs e)   // вызывается когда нажимаем кнопку сортировки
         {
-            Update(sortFieldComboBox.Text);
+            Update(sortFieldComboBox.Text); // sortFieldComboBox.Text - выбранное поле в выпадающем списке
         }
 
-        private void filterButton_Click(object sender, EventArgs e)
+        private void filterButton_Click(object sender, EventArgs e) // вызывается когда нажали кнопку фильтрации
         {
             Tuple<object, string>[] values = new Tuple<object, string>[]{
                 new Tuple<object, string>(nameField, dbFields[1]),
@@ -159,13 +173,13 @@ namespace AccountCorporatEventCostSystem
             Update(sortFieldComboBox.Text, isFiltered: true);
         }
 
-        private void clearButton_Click(object sender, EventArgs e)
+        private void clearButton_Click(object sender, EventArgs e)  // вызывается когда нажали кнопку очистки
         {
-            object[] values = { -1, "", "", "", "", "", "", "" };
+            object[] values = { -1, "", "", "", "", "", "", "" };   
             setFields(values);
         }
 
-        private bool isFormValid(object[] fields = null)
+        private bool isFormValid(object[] fields = null)    // проверка полей формы вызывается при добавлении, реактировании, фильтрации
         {
             errors.Clear();
             if ((fields?.Length ?? 0) != 0)
@@ -196,18 +210,18 @@ namespace AccountCorporatEventCostSystem
             return true;
         }
 
-        private void deleteButton_Click(object sender, EventArgs e)
+        private void deleteButton_Click(object sender, EventArgs e) // вызывается при нажатии кнопки удалить
         {
             OdbcCommand command = dbConnection.CreateCommand();
-            command.CommandText = $"DELETE FROM [events] WHERE [ID] = {itemId}";
+            command.CommandText = $"DELETE FROM [events] WHERE [ID] = {itemId}";    // команда удаления
             command.ExecuteNonQuery();
-            var ix = eventsListBox.SelectedIndex - 1;
-            Update("ID", ix >= 0 ? ix : 0);
+            var ix = eventsListBox.SelectedIndex - 1;   // запоминаем предыдущий индекс выбранного элемента
+            Update("ID", ix >= 0 ? ix : 0); // обновляем и передаём значени ix или 0 (если ix < 0, т.е. элемент, который мы удалил был первым)
         }
 
-        private void updateButton_Click(object sender, EventArgs e)
+        private void updateButton_Click(object sender, EventArgs e) // вызвыается при нажатии кнопки обновить
         {
-            if (!isFormValid())
+            if (!isFormValid()) // проверка правильности нет неправильно заполненных полей
                 return;
             OdbcCommand command = dbConnection.CreateCommand();
             command.CommandText = $"UPDATE [events] SET [Name] = \'{nameField.Text}\', [VisitorsAmount] = {visitorsAmountField.Text}, [CostPerVisitor] = {costPerVisitorField.Text}, [RentPrice] = {rentPriceField.Text}, [EquipmentEntertainmentCosts] = {equipmentEntertainmentCostsField.Text}, [StartTime] = {startDateTimePicker.Value.ToOADate()}, [EndTime] = {endDateTimePicker.Value.ToOADate()} WHERE [ID] = {itemId}";
@@ -215,23 +229,26 @@ namespace AccountCorporatEventCostSystem
             Update(sortFieldComboBox.Text, eventsListBox.SelectedIndex);
         }
 
-        private void addButton_Click(object sender, EventArgs e)
+        private void addButton_Click(object sender, EventArgs e)    // вызывается при нажатии кнопки добавить
         {
-            if (isAnyFieldEmpty())
+            if (isAnyFieldEmpty())  // проверка нет ли пустых полей
             {
                 MessageBox.Show("Fill all fields!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            if (!isFormValid())
+            if (!isFormValid()) // провекра правильности полей
                 return;
 
             OdbcCommand command = dbConnection.CreateCommand();
+            // dbFields.Skip(1).ToArray() - вернёт все массив dbFields без первого значения, т.е. без ID
+            // {string.Join(", ", dbFields.Skip(1).ToArray())} - соеденит все элементы массива через запятую в строку
             command.CommandText = $"INSERT INTO [events] ({string.Join(", ", dbFields.Skip(1).ToArray())}) VALUES (\'{nameField.Text}\', {visitorsAmountField.Text}, {costPerVisitorField.Text}, {rentPriceField.Text}, {equipmentEntertainmentCostsField.Text}, {startDateTimePicker.Value.ToOADate()}, {endDateTimePicker.Value.ToOADate()})";
             command.ExecuteNonQuery();
             Update(sortFieldComboBox.Text, eventsListBox.Items.Count);
         }
 
-        private void selectedIndexChenged(object sender, EventArgs e)
+        private void selectedIndexChenged(object sender, EventArgs e)   //  вызывается при изменении выбранного элемента в списке
+                                                                        //  обновляет значения в полях (обновляет подробную информцию)
         {
             try
             {
@@ -250,7 +267,7 @@ namespace AccountCorporatEventCostSystem
             }
             catch {}
         }
-
+        // дальше идут раздичного рода проверки, которые вызывается в функции isFormValid, т.к. все значения полей в графическом интерфейсе это изначально строки
         private void ValidateName(object sender, System.ComponentModel.CancelEventArgs e)
         {
             var target = (sender as TextBox);
