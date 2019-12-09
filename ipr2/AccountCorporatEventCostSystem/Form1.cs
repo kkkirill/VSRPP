@@ -38,7 +38,8 @@ namespace AccountCorporatEventCostSystem
             filterTypeComboBox.SelectedIndex = -1;
                                                                 // выше просто выставляю значения графических элементов по умолчанию
 
-            dbConnection = new OdbcConnection(Program.ConnectionString);    // подключение к базе данных
+            dbConnection = new OdbcConnection(Program.ConnectionString);    // подключение к базе данных Program.ConnectionString мможешь посмотреть в файле Program.cs
+                                                                            // там просто путь к файлу с базой данных и специально отформатированная строка для подключения
             dbConnection.Open();    // открываем подключение
             Update("ID");   // обновляем список записей (в программе, т.е. список при старте программы пустой, но почти моментально заполняется данными из таблицы)
         }
