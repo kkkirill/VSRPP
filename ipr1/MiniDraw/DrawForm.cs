@@ -118,30 +118,31 @@ namespace MiniDraw
             isPainting = false;
         }
 
-        private void DrawRectangle()
+        private void DrawRectangle()                                // обновляем координаты прямоугольника в соответствии с значениями
+                                                                    // startCursorPoint и endCursorPoint и рисуем его (вызывается в функции onPaint ниже)
         {
             rectangle = new Rectangle(Math.Min(startCursorPoint.X, endCursorPoint.X),
                                       Math.Min(startCursorPoint.Y, endCursorPoint.Y),
                                       Math.Abs(endCursorPoint.X - startCursorPoint.X),
-                                      Math.Abs(endCursorPoint.Y - startCursorPoint.Y));
+                                      Math.Abs(endCursorPoint.Y - startCursorPoint.Y));     // для того чтобы правильно отрисовывать прямоугольник, когда мы тянем мышь влево и вниз
+                                                                                            // т.е. когда риусем прямоугольник в отрицатльеный координатах
 
-            if (isFilled)
-                graphics.FillRectangle(brush, rectangle);
+            if (isFilled)   // если стоит галочка рисовать закрашенные прямоугольники
+                graphics.FillRectangle(brush, rectangle);   // рисуем закрашенный прямоуглоьник
             else
-                graphics.DrawRectangle(pen, rectangle);
-
+                graphics.DrawRectangle(pen, rectangle); // рисуем обычный прямоуглоьник
         }
 
-        private void FillCheckboxStateChanged(object sender, EventArgs e)
+        private void FillCheckboxStateChanged(object sender, EventArgs e)   //срабатывает, когда кликаем по галочке заполнения на интерфейсе
         {
-            isFilled = fillButton.Checked;
-            RedrawContent();
+            isFilled = fillButton.Checked;  // запоминаем новое значение в переменную
+            RedrawContent();    // перерисовываем
         }
 
-        private void OnPaint(object sender, PaintEventArgs e)
+        private void OnPaint(object sender, PaintEventArgs e)   // вызывается как мы водим рисуем на канвасе т.е. зажали левую кнопку мыши м водим мышь
         {
-            if (isPainting)
-                DrawRectangle();
+            if (isPainting) 
+                DrawRectangle();    //рисуем прямоугольник
             RedrawContent();
         }
     }
